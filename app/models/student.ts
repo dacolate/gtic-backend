@@ -20,6 +20,9 @@ export default class Student extends BaseModel {
   @column()
   declare address: string
 
+  @column()
+  declare active: boolean
+
   @manyToMany(() => Parent, { pivotTable: 'student_parent' })
   declare parents: ManyToMany<typeof Parent>
 

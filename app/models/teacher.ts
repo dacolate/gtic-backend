@@ -16,6 +16,9 @@ export default class Teacher extends BaseModel {
   @column()
   declare email: string | null
 
+  @column()
+  declare active: boolean
+
   @hasMany(() => Class)
   declare classes: HasMany<typeof Class>
 
