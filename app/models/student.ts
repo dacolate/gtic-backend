@@ -1,8 +1,11 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import Parent from './parent.js'
-import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import Class from './class.js'
+import Attendance from './attendance.js'
+import Payment from './payment.js'
+import StudentClass from './student_class.js'
 
 export default class Student extends BaseModel {
   @column({ isPrimary: true })
@@ -12,10 +15,22 @@ export default class Student extends BaseModel {
   declare name: string
 
   @column()
+  declare gender: 'M' | 'F'
+
+  @column()
   declare phone: string
 
   @column()
   declare email: string
+
+  @column()
+  declare cni: string | null
+
+  @column()
+  declare nationality: string
+
+  @column()
+  declare birthday: DateTime
 
   @column()
   declare address: string
@@ -23,11 +38,20 @@ export default class Student extends BaseModel {
   @column()
   declare active: boolean
 
-  @manyToMany(() => Parent, { pivotTable: 'student_parent' })
+  @manyToMany(() => Parent, { pivotTable: 'student_parents' })
   declare parents: ManyToMany<typeof Parent>
 
-  @manyToMany(() => Class, { pivotTable: 'student_class' })
+  @manyToMany(() => Class, { pivotTable: 'student_classes' })
   declare classes: ManyToMany<typeof Class>
+
+  @hasMany(() => Attendance)
+  declare attendances: HasMany<typeof Attendance>
+
+  @hasMany(() => Payment)
+  declare payments: HasMany<typeof Payment>
+
+  @hasMany(() => StudentClass)
+  declare student_classes: HasMany<typeof StudentClass>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

@@ -16,6 +16,12 @@ export default class extends BaseSchema {
         .onDelete('SET NULL')
       table.integer('grade_id').unsigned().references('id').inTable('grades').onDelete('SET NULL')
       table.integer('course_id').unsigned().references('id').inTable('courses').onDelete('SET NULL')
+
+      table
+        .foreign(['grade_id', 'course_id'])
+        .references(['id', 'course_id'])
+        .inTable('grades')
+        .onDelete('SET NULL')
       table.date('start_date').notNullable()
       table.integer('expected_duration').notNullable() // Duration in days
 

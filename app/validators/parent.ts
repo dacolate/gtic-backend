@@ -21,10 +21,10 @@ export const parentValidator = vine.compile(
       .optional(),
     phone: vine
       .string()
-      .regex(/^[0-9]{9}$/)
+      .regex(/^\+?[0-9]{7,15}$/)
       .unique(async (query, field) => {
-        const parent = await query.from('parents').where('phone', field).first()
-        return !parent
+        const teacher = await query.from('teachers').where('phone', field).first()
+        return !teacher
       }),
   })
 )

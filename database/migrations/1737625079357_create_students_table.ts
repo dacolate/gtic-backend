@@ -7,6 +7,10 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
       table.string('name').notNullable()
+      table.enum('gender', ['M', 'F']).notNullable()
+      table.string('nationality').notNullable()
+      table.date('birthday').notNullable()
+      table.string('cni').nullable()
       table.string('phone').notNullable().unique()
       table.string('email').nullable().unique()
       table.string('address').notNullable()

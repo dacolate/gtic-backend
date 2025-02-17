@@ -17,13 +17,14 @@ export const teacherValidator = vine.compile(
       .unique(async (query, field) => {
         const teacher = await query.from('teachers').where('email', field).first()
         return !teacher
-      }),
+      })
+      .optional(),
     phone: vine
       .string()
-      .regex(/^\d{9}$/)
+      .regex(/^\+?[0-9]{7,15}$/)
       .unique(async (query, field) => {
         const teacher = await query.from('teachers').where('phone', field).first()
         return !teacher
-      }), // 9 digits
+      }),
   })
 )

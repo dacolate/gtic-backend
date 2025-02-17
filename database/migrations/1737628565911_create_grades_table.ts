@@ -16,6 +16,8 @@ export default class extends BaseSchema {
         .inTable('pricings')
         .onDelete('SET NULL')
 
+      table.unique(['id', 'course_id'])
+
       table.timestamp('created_at')
       table.timestamp('updated_at')
     })

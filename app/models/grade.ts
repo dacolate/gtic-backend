@@ -31,7 +31,7 @@ export default class Grade extends BaseModel {
   declare course: BelongsTo<typeof Course>
 
   @hasMany(() => Class)
-  declare class: HasMany<typeof Class>
+  declare classes: HasMany<typeof Class>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

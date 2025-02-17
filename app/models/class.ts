@@ -20,7 +20,7 @@ export default class Class extends BaseModel {
   declare expectedDuration: number
 
   @column()
-  declare gradeId: number | null
+  declare gradeId?: number | null
 
   @column()
   declare courseId: number | null
@@ -30,20 +30,36 @@ export default class Class extends BaseModel {
 
   @beforeSave()
   static async validateClass(model: Class) {
-    // Validate class
-    if (model.gradeId && model.courseId) {
-      model.courseId = null
-    }
     if (!model.startDate) {
       model.startDate = DateTime.now()
+    }
+
+    if (model.gradeId) {
+      const grade = await Grade.find(model.gradeId)
+
+      if (!grade) {
+        throw new Error('The specified grade does not exits.')
+      }
+
+      if (model.courseId && grade.courseId !== model.courseId) {
+        throw new Error('The provided grade does not belong to the specified course.')
+      }
+    }
+
+    if (!model.gradeId && model.courseId) {
+      const course = await Course.find(model.courseId)
+
+      if (course?.grades) {
+        throw new Error('Can not assign directly to a grade with courses')
+      }
     }
   }
 
   @belongsTo(() => Grade)
-  declare grade: BelongsTo<typeof Grade> | null
+  declare grade: BelongsTo<typeof Grade>
 
   @belongsTo(() => Course)
-  declare course: BelongsTo<typeof Course> | null
+  declare course: BelongsTo<typeof Course>
 
   @belongsTo(() => Teacher)
   declare teacher: BelongsTo<typeof Teacher>

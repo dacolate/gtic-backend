@@ -13,7 +13,7 @@ export default class extends BaseSchema {
         .inTable('students')
         .onDelete('CASCADE')
       table.integer('class_id').unsigned().references('id').inTable('classes').onDelete('CASCADE')
-      table.date('date').notNullable()
+      table.date('date').notNullable().defaultTo(this.now())
       table.boolean('presence').nullable()
       table.timestamp('created_at')
       table.timestamp('updated_at')

@@ -6,7 +6,12 @@ import { teacherValidator } from '#validators/teacher'
 
 export default class TeachersController {
   async index({ response }: HttpContext) {
-    const teachers = await Teacher.all()
+    // const teachers = await Teacher.all()
+
+    const teachers = await Teacher.query().preload('classes', (classQuery) => {
+      classQuery.preload('course')
+    })
+
     if (teachers.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No teachers found'))
     }
@@ -38,7 +43,7 @@ export default class TeachersController {
   }
 
   async show({ params, response }: HttpContext) {
-    const teacher = await Teacher.query().where('id', params.id).first()
+    const teacher = await Teacher.query().where('id', params.id).preload('classes').first()
     if (!teacher) {
       return response.status(404).json(RequestResponse.failure(null, 'Teacher not found'))
     }

@@ -7,7 +7,7 @@ import { DateTime } from 'luxon'
 
 export default class ClasssController {
   async index({ response }: HttpContext) {
-    const classs = await Class.all()
+    const classs = await Class.query().preload('grade')
     if (classs.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No class found'))
     }
@@ -45,7 +45,7 @@ export default class ClasssController {
   }
 
   async show({ params, response }: HttpContext) {
-    const classs = await Class.query().where('id', params.id).first()
+    const classs = await Class.query().where('id', params.id).preload('grade').first()
     if (!classs) {
       return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
     }

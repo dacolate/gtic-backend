@@ -61,15 +61,28 @@ export default class AuthController {
       // Create JWT token
       const token = await User.accessTokens.create(user)
 
+      // response.plainCookie('authToken', token, {
+      //   httpOnly: true,
+      //   sameSite: 'lax',
+      //   secure: process.env.NODE_ENV === 'production',
+      //   path: '/',
+      //   encode: true,
+      // })
+
+      const responseData = {
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        token: token,
+      }
+
       // Respond with success and token
-      return response.ok(
-        RequestResponse.success({ token, ...user.serialize() }, 'Login successful')
-      )
+      return response.ok(RequestResponse.success(responseData, 'Login successful'))
     } catch (error) {
       // Catch validation errors
       if (error instanceof errors.E_VALIDATION_ERROR) {
         return response
-          .status(422)
+          .status(423)
           .json(RequestResponse.failure(error.messages, 'Validation failed'))
       }
 

@@ -15,9 +15,9 @@ export default class extends BaseSchema {
         .onDelete('CASCADE')
       table.date('start_date').nullable()
       // table.string('attendance').nullable() // Could use ENUM if attendance values are predefined
-      // table.decimal('special_register_fee', 10, 2).nullable()
-      // table.decimal('special_instalment_1_value', 10, 2).nullable()
-      // table.decimal('special_instalment_2_value', 10, 2).nullable()
+      table.decimal('special_register_fee', 10, 2).nullable()
+      table.decimal('special_instalment_1_value', 10, 2).nullable()
+      table.decimal('special_instalment_2_value', 10, 2).nullable()
       table
         .integer('pricing_id')
         .unsigned()

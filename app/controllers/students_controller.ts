@@ -6,7 +6,18 @@ import Student from '#models/student'
 
 export default class StudentsController {
   async index({ response }: HttpContext) {
-    const students = await Student.all()
+    const students = await Student.query()
+      .preload('classes', (query) => {
+        query.preload('course').preload('grade', (query2) => {
+          query2.preload('pricing')
+        })
+      })
+      .preload('parents')
+      .preload('attendances')
+      .preload('payments')
+      .preload('student_classes', (query) => {
+        query.preload('pricing')
+      })
     if (students.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No students found'))
     }
@@ -38,7 +49,20 @@ export default class StudentsController {
   }
 
   async show({ params, response }: HttpContext) {
-    const student = await Student.query().where('id', params.id).first()
+    const student = await Student.query()
+      .where('id', params.id)
+      .preload('classes', (query) => {
+        query.preload('course').preload('grade', (query2) => {
+          query2.preload('pricing')
+        })
+      })
+      .preload('parents')
+      .preload('attendances')
+      .preload('payments')
+      .preload('student_classes', (query) => {
+        query.preload('pricing')
+      })
+      .first()
     if (!student) {
       return response.status(404).json(RequestResponse.failure(null, 'Student not found'))
     }

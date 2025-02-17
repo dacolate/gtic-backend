@@ -22,6 +22,9 @@ export default class Teacher extends BaseModel {
   @hasMany(() => Class)
   declare classes: HasMany<typeof Class>
 
+  // @hasManyThrough([() => Course, () => Class])
+  // declare courses: HasManyThrough<typeof Course>
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
