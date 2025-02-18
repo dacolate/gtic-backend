@@ -10,6 +10,8 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import { RequestResponse } from '../types.js'
+const NewStudentsController = () => import('#controllers/new_students_controller')
+const PaymentController = () => import('#controllers/payments_controller')
 const StudentsController = () => import('#controllers/students_controller')
 const PricingsController = () => import('#controllers/pricings_controller')
 const ParentsController = () => import('#controllers/parents_controller')
@@ -116,3 +118,15 @@ router
     router.delete(':id', [StudentsController, 'delete'])
   })
   .prefix('students')
+
+router
+  .group(() => {
+    router.get(':id', [PaymentController, 'show'])
+    router.get('/', [PaymentController, 'index'])
+    router.post('/', [PaymentController, 'store'])
+    router.put(':id', [PaymentController, 'update'])
+    router.delete(':id', [PaymentController, 'delete'])
+  })
+  .prefix('payments')
+
+router.post('/', [NewStudentsController, 'store']).prefix('newstudent')
