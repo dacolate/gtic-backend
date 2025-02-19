@@ -8,7 +8,7 @@ export default class CoursesController {
   async index({ response }: HttpContext) {
     const courses = await Course.query()
       .preload('classes')
-      .preload('grades', (query) => query.preload('classes'))
+      .preload('grades', (query) => query.preload('classes').preload('pricing'))
     if (courses.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No courses found'))
     }
@@ -43,7 +43,7 @@ export default class CoursesController {
     const course = await Course.query()
       .where('id', params.id)
       .preload('classes')
-      .preload('grades', (query) => query.preload('classes'))
+      .preload('grades', (query) => query.preload('classes').preload('pricing'))
       .first()
     if (!course) {
       return response.status(404).json(RequestResponse.failure(null, 'Course not found'))

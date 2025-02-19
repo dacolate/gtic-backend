@@ -30,27 +30,37 @@ export default class NewStudentsController {
         .status(400)
         .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
     }
-    // try {
-    //   const data = await request.validateUsing(newStudentValidator)
 
-    //   const student = await Student.create(newStudentValidator)
-
-    //   t
-
-    //   return response
-    //     .status(201)
-    //     .json(RequestResponse.success(student, 'Student created successfully'))
-    // } catch (error) {
-    //   // Catch validation errors
-    //   if (error instanceof errors.E_VALIDATION_ERROR) {
-    //     return response
-    //       .status(422)
-    //       .json(RequestResponse.failure(error.messages, 'Validation failed'))
-    //   }
-    //   return response
-    //     .status(400)
-    //     .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
-    // }
+    try {
+      const studentName = await Student.query().where('name', payload.name).first()
+      if (studentName) {
+        return response
+          .status(422)
+          .json(RequestResponse.failure(studentName, 'Existing student name'))
+      }
+      const studentEmail = payload.email
+        ? await Student.query()
+            .where('email', payload.email as string)
+            .first()
+        : null
+      if (studentEmail) {
+        return response
+          .status(422)
+          .json(RequestResponse.failure(studentEmail, 'Existing student email'))
+      }
+      const studentPhone = payload.phone
+        ? await Student.query().where('phone', payload.phone).first()
+        : null
+      if (studentPhone) {
+        return response
+          .status(422)
+          .json(RequestResponse.failure(studentPhone, 'Existing student phone'))
+      }
+    } catch (error) {
+      return response
+        .status(400)
+        .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
+    }
 
     // Start a database transaction
     const trx = await db.transaction()
@@ -93,7 +103,7 @@ export default class NewStudentsController {
 
       const chosenClass = await Class.find(payload.class)
 
-      StudentClass.create(
+      await StudentClass.create(
         {
           studentId: student.id,
           classId: chosenClass?.id,
@@ -101,7 +111,7 @@ export default class NewStudentsController {
         { client: trx }
       )
 
-      StudentParent.create(
+      await StudentParent.create(
         {
           studentId: student.id,
           parentId: parent.id,
