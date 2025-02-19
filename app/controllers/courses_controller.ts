@@ -7,7 +7,7 @@ import { errors } from '@vinejs/vine'
 export default class CoursesController {
   async index({ response }: HttpContext) {
     const courses = await Course.query()
-      .preload('classes')
+      .preload('classes', (query) => query.preload('teacher'))
       .preload('grades', (query) => query.preload('classes').preload('pricing'))
     if (courses.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No courses found'))
@@ -42,7 +42,7 @@ export default class CoursesController {
   async show({ params, response }: HttpContext) {
     const course = await Course.query()
       .where('id', params.id)
-      .preload('classes')
+      .preload('classes', (query) => query.preload('teacher'))
       .preload('grades', (query) => query.preload('classes').preload('pricing'))
       .first()
     if (!course) {

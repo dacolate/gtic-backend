@@ -8,9 +8,12 @@ export default class StudentsController {
   async index({ response }: HttpContext) {
     const students = await Student.query()
       .preload('classes', (query) => {
-        query.preload('course').preload('grade', (query2) => {
-          query2.preload('pricing')
-        })
+        query
+          .preload('course')
+          .preload('teacher')
+          .preload('grade', (query2) => {
+            query2.preload('pricing')
+          })
       })
       .preload('parents')
       .preload('attendances')
@@ -52,9 +55,12 @@ export default class StudentsController {
     const student = await Student.query()
       .where('id', params.id)
       .preload('classes', (query) => {
-        query.preload('course').preload('grade', (query2) => {
-          query2.preload('pricing')
-        })
+        query
+          .preload('course')
+          .preload('teacher')
+          .preload('grade', (query2) => {
+            query2.preload('pricing')
+          })
       })
       .preload('parents')
       .preload('attendances')

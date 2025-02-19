@@ -6,6 +6,7 @@ import Class from './class.js'
 import Attendance from './attendance.js'
 import Payment from './payment.js'
 import StudentClass from './student_class.js'
+// import StudentParent from './student_parent.js'
 
 export default class Student extends BaseModel {
   @column({ isPrimary: true })
@@ -46,6 +47,9 @@ export default class Student extends BaseModel {
 
   @hasMany(() => Attendance)
   declare attendances: HasMany<typeof Attendance>
+
+  // @hasMany(() => StudentParent)
+  // declare parent: HasMany<typeof StudentParent>
 
   @hasMany(() => Payment)
   declare payments: HasMany<typeof Payment>
