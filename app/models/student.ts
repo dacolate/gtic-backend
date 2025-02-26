@@ -16,13 +16,16 @@ export default class Student extends BaseModel {
   declare name: string
 
   @column()
+  declare firstname: string
+
+  @column()
   declare gender: 'M' | 'F'
 
   @column()
   declare phone: string
 
   @column()
-  declare email: string
+  declare email: string | null
 
   @column()
   declare cni: string | null
@@ -34,7 +37,7 @@ export default class Student extends BaseModel {
   declare birthday: DateTime
 
   @column()
-  declare address: string
+  declare address: string | null
 
   @column()
   declare active: boolean
@@ -56,6 +59,43 @@ export default class Student extends BaseModel {
 
   @hasMany(() => StudentClass)
   declare student_classes: HasMany<typeof StudentClass>
+
+  // @afterFetch()
+  // static async updateStudentClassPaymentStatus(students: Student[]) {
+  //   for (const student of students) {
+  //     // Load the related studentClasses for the current student
+  //     const studentClasses = await StudentClass.query()
+  //       .where('studentId', student.id)
+  //       .preload('pricing') // Preload pricing if needed
+
+  //     // Update paymentStatus for each studentClass
+  //     for (const studentClass of studentClasses) {
+  //       const payments = await Payment.query()
+  //         .where('studentId', studentClass.studentId)
+  //         .where('classId', studentClass.classId)
+  //         .sum('amount')
+  //         .first()
+
+  //       const pricing = studentClass.pricing
+  //       if (!pricing) {
+  //         studentClass.paymentStatus = 'pricing not found'
+  //         continue
+  //       }
+
+  //       const totalFee = pricing.registerFee + pricing.instalment1Fee + pricing.instalment2Fee
+  //       const totalPaid = payments?.amount || 0
+
+  //       if (totalPaid >= totalFee) {
+  //         studentClass.paymentStatus = `up to date (paid: ${totalPaid}, total: ${typeof totalFee})`
+  //       } else {
+  //         studentClass.paymentStatus = `not up to date (paid: ${totalPaid}, total: ${typeof totalFee})`
+  //       }
+
+  //       // Save the updated studentClass
+  //       await studentClass.save()
+  //     }
+  //   }
+  // }
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

@@ -7,8 +7,12 @@ import { errors } from '@vinejs/vine'
 export default class CoursesController {
   async index({ response }: HttpContext) {
     const courses = await Course.query()
-      .preload('classes', (query) => query.preload('teacher'))
-      .preload('grades', (query) => query.preload('classes').preload('pricing'))
+      .preload('classes', (query) => query.preload('teacher').preload('pricing'))
+      .preload('grades', (query) =>
+        query
+          .preload('classes', (quer) => quer.preload('teacher').preload('pricing'))
+          .preload('pricing')
+      )
     if (courses.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No courses found'))
     }
@@ -42,8 +46,12 @@ export default class CoursesController {
   async show({ params, response }: HttpContext) {
     const course = await Course.query()
       .where('id', params.id)
-      .preload('classes', (query) => query.preload('teacher'))
-      .preload('grades', (query) => query.preload('classes').preload('pricing'))
+      .preload('classes', (query) => query.preload('teacher').preload('pricing'))
+      .preload('grades', (query) =>
+        query
+          .preload('classes', (quer) => quer.preload('teacher').preload('pricing'))
+          .preload('pricing')
+      )
       .first()
     if (!course) {
       return response.status(404).json(RequestResponse.failure(null, 'Course not found'))

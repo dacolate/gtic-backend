@@ -16,7 +16,14 @@ export default class extends BaseSchema {
         .onDelete('SET NULL')
       table.integer('grade_id').unsigned().references('id').inTable('grades').onDelete('SET NULL')
       table.integer('course_id').unsigned().references('id').inTable('courses').onDelete('SET NULL')
+      table
+        .integer('pricing_id')
+        .unsigned()
+        .references('id')
+        .inTable('pricings')
+        .onDelete('SET NULL')
 
+      table.boolean('active').defaultTo(true)
       table
         .foreign(['grade_id', 'course_id'])
         .references(['id', 'course_id'])

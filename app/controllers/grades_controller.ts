@@ -6,7 +6,9 @@ import { gradeValidator } from '#validators/grade'
 
 export default class GradesController {
   async index({ response }: HttpContext) {
-    const grades = await Grade.all()
+    const grades = await Grade.query().preload('classes', (query) =>
+      query.preload('teacher').preload('pricing')
+    )
     if (grades.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No grades found'))
     }
@@ -34,7 +36,10 @@ export default class GradesController {
   }
 
   async show({ params, response }: HttpContext) {
-    const grade = await Grade.query().where('id', params.id).first()
+    const grade = await Grade.query()
+      .where('id', params.id)
+      .preload('classes', (query) => query.preload('teacher').preload('pricing'))
+      .first()
     if (!grade) {
       return response.status(404).json(RequestResponse.failure(null, 'Grade not found'))
     }

@@ -11,6 +11,7 @@ import Payment from '#models/payment'
 import StudentClass from '#models/student_class'
 import Class from '#models/class'
 import StudentParent from '#models/student_parent'
+import Pricing from '#models/pricing'
 
 export default class NewStudentsController {
   async store({ request, response }: HttpContext) {
@@ -32,7 +33,10 @@ export default class NewStudentsController {
     }
 
     try {
-      const studentName = await Student.query().where('name', payload.name).first()
+      const studentName = await Student.query()
+        .where('name', payload.name)
+        .andWhere('firstname', payload.firstname)
+        .first()
       if (studentName) {
         return response
           .status(422)
@@ -70,6 +74,7 @@ export default class NewStudentsController {
       const student = await Student.create(
         {
           name: payload.name,
+          firstname: payload.firstname,
           email: payload.email,
           phone: payload.phone,
           address: payload.address,
@@ -81,12 +86,41 @@ export default class NewStudentsController {
         { client: trx }
       )
 
-      // Create the parent
-      const parent = await Parent.create(
+      // Create the parent if given
+      let parent = null
+      if (!payload.parentName || !payload.parentPhone || !payload.parentEmail) {
+        parent = await Parent.create(
+          {
+            name: payload.parentName,
+            phone: payload.parentPhone,
+            email: payload.parentEmail,
+          },
+          { client: trx }
+        )
+        await StudentParent.create(
+          {
+            studentId: student.id,
+            parentId: parent.id,
+          },
+          { client: trx }
+        )
+      }
+      // Create the pricing
+
+      const pricing = await Pricing.firstOrCreate(
         {
-          name: payload.parentName,
-          phone: payload.parentPhone,
-          email: payload.parentEmail,
+          registerFee: payload.registrationFee,
+          instalment1Fee: payload.firstInstalmentFee,
+          instalment2Fee: payload.secondInstalmentFee,
+          instalment1Deadline: payload.firstInstalmentDeadline,
+          instalment2Deadline: payload.secondInstalmentDeadline,
+        },
+        {
+          registerFee: payload.registrationFee,
+          instalment1Fee: payload.firstInstalmentFee,
+          instalment2Fee: payload.secondInstalmentFee,
+          instalment1Deadline: payload.firstInstalmentDeadline,
+          instalment2Deadline: payload.secondInstalmentDeadline,
         },
         { client: trx }
       )
@@ -107,14 +141,7 @@ export default class NewStudentsController {
         {
           studentId: student.id,
           classId: chosenClass?.id,
-        },
-        { client: trx }
-      )
-
-      await StudentParent.create(
-        {
-          studentId: student.id,
-          parentId: parent.id,
+          pricingId: pricing.id,
         },
         { client: trx }
       )
@@ -129,6 +156,7 @@ export default class NewStudentsController {
             student,
             parent,
             payment,
+            pricing,
           },
           'Student, parent, and payment created successfully'
         )

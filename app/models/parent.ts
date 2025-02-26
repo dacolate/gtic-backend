@@ -8,13 +8,13 @@ export default class Parent extends BaseModel {
   declare id: number
 
   @column()
-  declare name: string
+  declare name: string | null
 
   @column()
-  declare phone: string
+  declare phone: string | null
 
   @column()
-  declare email: string
+  declare email: string | null
 
   @manyToMany(() => Student, { pivotTable: 'student_parent' })
   declare parents: ManyToMany<typeof Student>

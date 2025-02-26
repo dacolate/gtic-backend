@@ -5,19 +5,23 @@ export const newStudentValidator = vine.compile(
   vine.object({
     // Student Info
     name: vine.string().minLength(3).maxLength(64),
+    firstname: vine.string().minLength(3).maxLength(64),
     email: vine.string().email().normalizeEmail().optional(),
     phone: vine.string().regex(/^\+?[0-9]{7,15}$/),
-    address: vine.string(),
+    address: vine.string().optional(),
     gender: vine.enum(['M', 'F']),
     cni: vine.string().optional(),
     nationality: vine.string(),
     birthday: vine.string().transform((date) => DateTime.fromISO(date)),
 
     // Parent Info
-    parentName: vine.string().minLength(2),
-    parentPhone: vine.string().minLength(10),
-    parentAddress: vine.string().minLength(5),
-    parentEmail: vine.string().email(),
+    parentName: vine.string().minLength(2).optional(),
+    parentPhone: vine
+      .string()
+      .regex(/^\+?[0-9]{7,15}$/)
+      .optional(),
+    parentAddress: vine.string().minLength(5).optional(),
+    parentEmail: vine.string().email().optional(),
 
     // Class Attribution
     course: vine.string().minLength(1),

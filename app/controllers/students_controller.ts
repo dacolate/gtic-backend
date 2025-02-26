@@ -3,9 +3,112 @@ import { RequestResponse } from '../../types.js'
 import { studentValidator } from '#validators/student'
 import { errors } from '@vinejs/vine'
 import Student from '#models/student'
+import StudentClass from '#models/student_class'
+import Payment from '#models/payment'
+import { DateTime } from 'luxon'
+
+interface UpdateStudentClassPaymentStatusProps {
+  id?: number
+}
+
+async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPaymentStatusProps) {
+  // console.log('updateStudentClassPaymentStatus called') // Debug log
+
+  const stds = id ? await Student.query().where('id', id) : await Student.query()
+  // console.log(`Found ${stds.length} students`) // Debug log
+
+  for (const student of stds) {
+    // console.log(`Processing student ID: ${student.id}`) // Debug log
+
+    // Load the related studentClasses for the current student
+    const studentClasses = await StudentClass.query()
+      .where('studentId', student.id)
+      .preload('pricing') // Preload pricing if needed
+
+    // console.log(`Found ${studentClasses.length} classes for student ${student.id}`) // Debug log
+
+    // Update paymentStatus and days_til_deadline for each studentClass
+    for (const studentClass of studentClasses) {
+      // console.log(`Processing class ID: ${studentClass.id}`) // Debug log
+
+      const payments = await Payment.query()
+        .where('studentId', studentClass.studentId)
+        .where('classId', studentClass.classId)
+        .sum('amount')
+        .first()
+
+      // console.log(`Payments for class ID ${studentClass.id}:`, payments) // Debug log
+
+      const pricing = studentClass.pricing
+      if (!pricing) {
+        console.log(`Pricing not found for class ID: ${studentClass.id}`) // Debug log
+        studentClass.paymentStatus = 'pricing not found'
+        studentClass.daysTilDeadline = null // No deadline if pricing is missing
+        await studentClass.save()
+        continue
+      }
+
+      const now = DateTime.now()
+      const totalFee =
+        Number(pricing.registerFee) +
+        Number(pricing.instalment1Fee) +
+        Number(pricing.instalment2Fee)
+      const totalPaid = Number(payments?.$extras.sum) || 0
+
+      // console.log(`Total fee: ${totalFee}, Total paid: ${totalPaid}`) // Debug log
+
+      let paymentStatus: string
+      let daysTilDeadline: number | null = null
+
+      if (totalPaid >= totalFee) {
+        // Fully paid
+        paymentStatus = 'Up to date'
+        daysTilDeadline = null // Special value for fully paid
+      } else if (totalPaid < Number(pricing.registerFee) + Number(pricing.instalment1Fee)) {
+        // Not paid first installment
+        if (now > pricing.instalment1Deadline) {
+          // Missed first deadline
+          paymentStatus = 'Not up to date'
+          daysTilDeadline = Math.floor(now.diff(pricing.instalment1Deadline, 'days').days)
+        } else {
+          // Up to date for first installment
+          paymentStatus = 'Up to date'
+          daysTilDeadline = Math.floor(pricing.instalment1Deadline.diff(now, 'days').days)
+        }
+      } else if (totalPaid < totalFee) {
+        // Paid first installment but not fully paid
+        if (now > pricing.instalment2Deadline) {
+          // Missed second deadline
+          paymentStatus = 'Not up to date'
+          daysTilDeadline = Math.floor(now.diff(pricing.instalment2Deadline, 'days').days)
+        } else {
+          // Up to date for second installment
+          paymentStatus = 'Up to date'
+          daysTilDeadline = Math.floor(pricing.instalment2Deadline.diff(now, 'days').days)
+        }
+      } else {
+        // Default case (should not happen)
+        paymentStatus = 'Unknown'
+        daysTilDeadline = null
+      }
+
+      // Update the studentClass
+      studentClass.paymentStatus = paymentStatus
+      studentClass.daysTilDeadline = daysTilDeadline
+
+      // console.log(
+      //   `Updated paymentStatus for class ID: ${studentClass.id} to ${paymentStatus}, daysTilDeadline: ${daysTilDeadline}`
+      // ) // Debug log
+
+      // Save the updated studentClass
+      await studentClass.save()
+    }
+  }
+}
 
 export default class StudentsController {
   async index({ response }: HttpContext) {
+    await updateStudentClassPaymentStatus({})
     const students = await Student.query()
       .preload('classes', (query) => {
         query
@@ -21,6 +124,7 @@ export default class StudentsController {
       .preload('student_classes', (query) => {
         query.preload('pricing')
       })
+
     if (students.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No students found'))
     }
@@ -31,6 +135,7 @@ export default class StudentsController {
 
   async store({ request, response }: HttpContext) {
     try {
+      console.log(3) // Debug log
       const data = await request.validateUsing(studentValidator)
 
       const student = await Student.create(data)
@@ -52,6 +157,7 @@ export default class StudentsController {
   }
 
   async show({ params, response }: HttpContext) {
+    await updateStudentClassPaymentStatus({ id: params.id })
     const student = await Student.query()
       .where('id', params.id)
       .preload('classes', (query) => {
