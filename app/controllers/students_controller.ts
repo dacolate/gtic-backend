@@ -124,11 +124,28 @@ async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPayment
 
 export default class StudentsController {
   async index({ response }: HttpContext) {
-    const payment = await Payment.query().preload('student').preload('student_class')
-    if (payment.length === 0) {
-      return response.status(404).json(RequestResponse.failure(null, 'No payment found'))
+    await updateStudentClassPaymentStatus({})
+    const students = await Student.query()
+      .preload('classes', (query) => {
+        query
+          .preload('course')
+          .preload('teacher')
+          .preload('grade', (query2) => {
+            query2.preload('pricing')
+          })
+      })
+      .preload('parents')
+      .preload('attendances')
+      .preload('payments')
+      .preload('student_classes', (query) => {
+        query.preload('pricing')
+      })
+    if (students.length === 0) {
+      return response.status(404).json(RequestResponse.failure(null, 'No students found'))
     }
-    return response.status(200).json(RequestResponse.success(payment, 'Studs fetched successfully'))
+    return response
+      .status(200)
+      .json(RequestResponse.success(students, 'Students fetched successfully'))
   }
 
   async store({ request, response }: HttpContext) {
