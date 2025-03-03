@@ -125,23 +125,25 @@ export default class NewStudentsController {
         { client: trx }
       )
 
-      // Create the payment
-      const payment = await Payment.create(
-        {
-          studentId: student.id, // Link the payment to the student
-          amount: payload.paymentAmount,
-          paymentMethod: payload.paymentMethod,
-        },
-        { client: trx }
-      )
-
       const chosenClass = await Class.find(payload.class)
 
-      await StudentClass.create(
+      const studclass = await StudentClass.create(
         {
           studentId: student.id,
           classId: chosenClass?.id,
           pricingId: pricing.id,
+        },
+        { client: trx }
+      )
+
+      // Create the payment
+      const payment = await Payment.create(
+        {
+          studentId: student.id, // Link the payment to the student
+          classId: chosenClass?.id,
+          amount: payload.paymentAmount,
+          paymentMethod: payload.paymentMethod,
+          studentClassId: studclass.id,
         },
         { client: trx }
       )
