@@ -27,7 +27,8 @@ export default class extends BaseSchema {
         .nullable()
       table.string('payment_status').defaultTo('Up to date').notNullable() // Payment status: Up to date/Not up to date/Fully paid
       table.integer('days_til_deadline').nullable() // Days until deadline or since missed deadline
-
+      table.date('nextdeadline').nullable() // Next payment deadline
+      table.decimal('remaining_payment', 10, 2).nullable() // Remaining payment amount
       table.timestamp('created_at')
       table.timestamp('updated_at')
     })

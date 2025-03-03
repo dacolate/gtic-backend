@@ -109,13 +109,26 @@ export default class extends BaseSeeder {
         record_id: i + 1,
       })),
     ])
+    // Seed student_classes table
+    await StudentClass.createMany([
+      ...Array.from({ length: 10 }, (_, i) => ({
+        studentId: i + 1,
+        classId: i + 1,
+        pricingId: i + 1,
+        paymentStatus: 'Not up to date', // Default status
+        daysTilDeadline: null, // Default value
+      })),
+    ])
 
     // Seed payments table
     await Payment.createMany([
       ...Array.from({ length: 10 }, (_, i) => ({
         student_id: i + 1,
+        student_class_id: i + 1,
         class_id: i + 1,
-        amount: i < 3 ? (i + 1) * 300 : i < 6 ? (i + 1) * 150 : 0, // Fully paid for first 3, partially paid for next 3, no payment for rest
+        amount: i < 3 ? (i + 1) * 100 : i < 6 ? (i + 1) * 150 : 0, // Fully paid for first 3, partially paid for next 3, no payment for rest
+        payment_method: i % 2 === 0 ? ('OM' as const) : ('Cash' as const),
+        details: `Payment details for student ${i + 1}`,
       })),
     ])
 
@@ -125,17 +138,6 @@ export default class extends BaseSeeder {
         student_id: i + 1,
         class_id: i + 1,
         presence: true,
-      })),
-    ])
-
-    // Seed student_classes table
-    await StudentClass.createMany([
-      ...Array.from({ length: 10 }, (_, i) => ({
-        studentId: i + 1,
-        classId: i + 1,
-        pricingId: i + 1,
-        paymentStatus: 'Not up to date', // Default status
-        daysTilDeadline: null, // Default value
       })),
     ])
   }

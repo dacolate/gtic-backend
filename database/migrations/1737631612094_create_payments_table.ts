@@ -12,6 +12,12 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('students')
         .onDelete('CASCADE')
+      table
+        .integer('student_class_id')
+        .unsigned()
+        .references('id')
+        .inTable('student_classes')
+        .onDelete('CASCADE')
       table.integer('class_id').unsigned().references('id').inTable('classes').onDelete('CASCADE')
       table.decimal('amount', 10, 2).notNullable()
       table.enum('payment_method', ['OM', 'MOMO', 'Cash', 'Bank', 'Other'])

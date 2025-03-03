@@ -59,21 +59,29 @@ async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPayment
 
       let paymentStatus: string
       let daysTilDeadline: number | null = null
+      let nextDeadline: DateTime | null = null
+      let remainingPayment: number
 
       if (totalPaid >= totalFee) {
         // Fully paid
         paymentStatus = 'Up to date'
         daysTilDeadline = null // Special value for fully paid
+        nextDeadline = null // Special value for fully paid
+        remainingPayment = 0
       } else if (totalPaid < Number(pricing.registerFee) + Number(pricing.instalment1Fee)) {
         // Not paid first installment
         if (now > pricing.instalment1Deadline) {
           // Missed first deadline
           paymentStatus = 'Not up to date'
           daysTilDeadline = Math.floor(now.diff(pricing.instalment1Deadline, 'days').days)
+          nextDeadline = pricing.instalment1Deadline
+          remainingPayment = totalFee - totalPaid
         } else {
           // Up to date for first installment
           paymentStatus = 'Up to date'
           daysTilDeadline = Math.floor(pricing.instalment1Deadline.diff(now, 'days').days)
+          nextDeadline = pricing.instalment1Deadline
+          remainingPayment = totalFee - totalPaid
         }
       } else if (totalPaid < totalFee) {
         // Paid first installment but not fully paid
@@ -81,20 +89,28 @@ async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPayment
           // Missed second deadline
           paymentStatus = 'Not up to date'
           daysTilDeadline = Math.floor(now.diff(pricing.instalment2Deadline, 'days').days)
+          nextDeadline = pricing.instalment2Deadline
+          remainingPayment = totalFee - totalPaid
         } else {
           // Up to date for second installment
           paymentStatus = 'Up to date'
           daysTilDeadline = Math.floor(pricing.instalment2Deadline.diff(now, 'days').days)
+          nextDeadline = pricing.instalment2Deadline
+          remainingPayment = totalFee - totalPaid
         }
       } else {
         // Default case (should not happen)
         paymentStatus = 'Unknown'
         daysTilDeadline = null
+        nextDeadline = null
+        remainingPayment = 0
       }
 
       // Update the studentClass
       studentClass.paymentStatus = paymentStatus
       studentClass.daysTilDeadline = daysTilDeadline
+      studentClass.nextdeadline = nextDeadline
+      studentClass.remainingPayment = remainingPayment
 
       // console.log(
       //   `Updated paymentStatus for class ID: ${studentClass.id} to ${paymentStatus}, daysTilDeadline: ${daysTilDeadline}`
@@ -108,29 +124,11 @@ async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPayment
 
 export default class StudentsController {
   async index({ response }: HttpContext) {
-    await updateStudentClassPaymentStatus({})
-    const students = await Student.query()
-      .preload('classes', (query) => {
-        query
-          .preload('course')
-          .preload('teacher')
-          .preload('grade', (query2) => {
-            query2.preload('pricing')
-          })
-      })
-      .preload('parents')
-      .preload('attendances')
-      .preload('payments')
-      .preload('student_classes', (query) => {
-        query.preload('pricing')
-      })
-
-    if (students.length === 0) {
-      return response.status(404).json(RequestResponse.failure(null, 'No students found'))
+    const payment = await Payment.query().preload('student').preload('student_class')
+    if (payment.length === 0) {
+      return response.status(404).json(RequestResponse.failure(null, 'No payment found'))
     }
-    return response
-      .status(200)
-      .json(RequestResponse.success(students, 'Students fetched successfully'))
+    return response.status(200).json(RequestResponse.success(payment, 'Studs fetched successfully'))
   }
 
   async store({ request, response }: HttpContext) {

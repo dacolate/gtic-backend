@@ -7,7 +7,12 @@ import { DateTime } from 'luxon'
 
 export default class ClasssController {
   async index({ response }: HttpContext) {
-    const classs = await Class.query().preload('grade').preload('pricing')
+    const classs = await Class.query()
+      .preload('grade', (query) => {
+        query.preload('course')
+      })
+      .preload('pricing')
+      .preload('teacher')
     if (classs.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No class found'))
     }
@@ -47,8 +52,11 @@ export default class ClasssController {
   async show({ params, response }: HttpContext) {
     const classs = await Class.query()
       .where('id', params.id)
-      .preload('grade')
+      .preload('grade', (query) => {
+        query.preload('course')
+      })
       .preload('pricing')
+      .preload('teacher')
       .first()
     if (!classs) {
       return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
