@@ -6,7 +6,19 @@ import { paymentValidator } from '#validators/payment'
 
 export default class PaymentController {
   async index({ response }: HttpContext) {
-    const payment = await Payment.query().preload('student').preload('student_class')
+    const payment = await Payment.query()
+      .preload('student')
+      .preload('student_class', (query) => {
+        query.preload('pricing')
+      })
+      .preload('class', (query) => {
+        query
+          .preload('grade', (quer) => {
+            quer.preload('course')
+          })
+          .preload('pricing')
+          .preload('teacher')
+      })
     if (payment.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No payment found'))
     }
@@ -37,11 +49,20 @@ export default class PaymentController {
     }
   }
 
-  async show({ params, response }: HttpContext) {
+  async show({ response }: HttpContext) {
     const payment = await Payment.query()
-      .where('id', params.id)
       .preload('student')
-      .preload('student_class')
+      .preload('student_class', (query) => {
+        query.preload('pricing')
+      })
+      .preload('class', (query) => {
+        query
+          .preload('grade', (quer) => {
+            quer.preload('course')
+          })
+          .preload('pricing')
+          .preload('teacher')
+      })
       .first()
     if (!payment) {
       return response.status(404).json(RequestResponse.failure(null, 'Payment not found'))
