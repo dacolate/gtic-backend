@@ -20,6 +20,7 @@ export default class NewStudentsController {
     // Validate the request data and catch validation errors
     try {
       payload = await request.validateUsing(newStudentValidator)
+      console.log(payload)
     } catch (error) {
       // Catch validation errors
       if (error instanceof errors.E_VALIDATION_ERROR) {
@@ -88,7 +89,7 @@ export default class NewStudentsController {
 
       // Create the parent if given
       let parent = null
-      if (!payload.parentName || !payload.parentPhone || !payload.parentEmail) {
+      if (payload.parentName || payload.parentPhone || payload.parentEmail) {
         parent = await Parent.create(
           {
             name: payload.parentName,
@@ -125,13 +126,39 @@ export default class NewStudentsController {
         { client: trx }
       )
 
-      const chosenClass = await Class.find(payload.class)
+      const chosenClass = await Class.query()
+        .where('id', payload.class)
+        .preload('course')
+        .preload('grade')
+        .preload('teacher')
+        .first()
+
+      const remainingPayment = Math.max(
+        0,
+        payload.registrationFee +
+          payload.firstInstalmentFee +
+          payload.secondInstalmentFee -
+          payload.paymentAmount
+      )
+
+      console.log('r', remainingPayment)
+
+      const nextDeadline =
+        payload.paymentAmount < payload.registrationFee + payload.firstInstalmentFee
+          ? payload.firstInstalmentDeadline
+          : payload.paymentAmount <
+              payload.registrationFee + payload.firstInstalmentFee + payload.secondInstalmentFee
+            ? payload.secondInstalmentDeadline
+            : null
+      console.log('nd', nextDeadline)
 
       const studclass = await StudentClass.create(
         {
           studentId: student.id,
           classId: chosenClass?.id,
           pricingId: pricing.id,
+          remainingPayment: remainingPayment,
+          nextdeadline: nextDeadline,
         },
         { client: trx }
       )
@@ -156,9 +183,11 @@ export default class NewStudentsController {
         RequestResponse.success(
           {
             student,
+            chosenClass,
             parent,
             payment,
             pricing,
+            studclass,
           },
           'Student, parent, and payment created successfully'
         )
