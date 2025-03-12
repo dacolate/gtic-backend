@@ -136,9 +136,8 @@ export default class StudentsController {
       })
       .preload('parents')
       .preload('attendances')
-      .preload('payments')
       .preload('student_classes', (query) => {
-        query.preload('pricing')
+        query.preload('pricing').preload('class')
       })
     if (students.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No students found'))
@@ -185,9 +184,23 @@ export default class StudentsController {
       })
       .preload('parents')
       .preload('attendances')
-      .preload('payments')
+      .preload('payments', (query) => {
+        query
+          .preload('student')
+          .preload('student_class', (quer) => {
+            quer.preload('pricing')
+          })
+          .preload('class', (quer) => {
+            quer
+              .preload('grade', (que) => {
+                que.preload('course')
+              })
+              .preload('pricing')
+              .preload('teacher')
+          })
+      })
       .preload('student_classes', (query) => {
-        query.preload('pricing')
+        query.preload('pricing').preload('class')
       })
       .first()
     if (!student) {

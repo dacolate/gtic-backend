@@ -3,6 +3,7 @@ import { RequestResponse } from '../../types.js'
 import { errors } from '@vinejs/vine'
 import Payment from '#models/payment'
 import { paymentValidator } from '#validators/payment'
+import StudentClass from '#models/student_class'
 
 export default class PaymentController {
   async index({ response }: HttpContext) {
@@ -31,7 +32,19 @@ export default class PaymentController {
     try {
       const data = await request.validateUsing(paymentValidator)
 
-      const payment = await Payment.create(data)
+      const studentClass = await StudentClass.query()
+        .where('classId', data.classId)
+        .andWhere('studentId', data.studentId)
+        .first()
+      console.log(studentClass)
+
+      if (studentClass) {
+        studentClass.remainingPayment = (studentClass.remainingPayment ?? 0) - data.amount
+      }
+
+      const payment = await Payment.create({ ...data, studentClassId: studentClass?.id })
+
+      console.log(payment)
 
       return response
         .status(201)
