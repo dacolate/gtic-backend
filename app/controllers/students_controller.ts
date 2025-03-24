@@ -1,11 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { RequestResponse } from '../../types.js'
-import { studentValidator } from '#validators/student'
+import { studentModifyValidator, studentValidator } from '#validators/student'
 import { errors } from '@vinejs/vine'
 import Student from '#models/student'
 import StudentClass from '#models/student_class'
 import Payment from '#models/payment'
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
+import Parent from '#models/parent'
 
 interface UpdateStudentClassPaymentStatusProps {
   id?: number
@@ -211,31 +213,128 @@ export default class StudentsController {
       .json(RequestResponse.success(student, 'Student fetched successfully'))
   }
 
+  // async update({ params, request, response }: HttpContext) {
+  //   try {
+  //     const payload = await Student.find(params.id)
+  //     if (!payload) {
+  //       return response.status(404).json(RequestResponse.failure(null, 'Student not found'))
+  //     }
+
+  //     const data = await request.validateUsing(studentModifyValidator)
+
+  //     const trx = await db.transaction()
+  //     const studentInfo = {
+  //       name: payload.name,
+  //       firstname: payload.firstname,
+  //       email: payload.email,
+  //       phone: payload.phone,
+  //       address: payload.address,
+  //       gender: payload.gender,
+  //       cni: payload.cni,
+  //       nationality: payload.nationality,
+  //       birthday: payload.birthday,
+  //     }
+  //     payload.merge(data)
+  //     await payload.save()
+
+  //     return response
+  //       .status(200)
+  //       .json(RequestResponse.success(student, 'Student updated successfully'))
+  //   } catch (error) {
+  //     // Catch validation errors
+  //     console.log(error)
+  //     if (error instanceof errors.E_VALIDATION_ERROR) {
+  //       return response
+  //         .status(422)
+  //         .json(RequestResponse.failure(error.messages, 'Validation failed'))
+  //     }
+  //     return response
+  //       .status(400)
+  //       .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
+  //   }
+  // }
   async update({ params, request, response }: HttpContext) {
+    const trx = await db.transaction() // Start a transaction
+
     try {
-      const student = await Student.find(params.id)
+      // Fetch the student within the transaction
+      const student = await Student.find(params.id, { client: trx })
       if (!student) {
+        await trx.rollback() // Rollback if the student is not found
         return response.status(404).json(RequestResponse.failure(null, 'Student not found'))
       }
 
-      const data = await request.validateUsing(studentValidator)
+      // Validate the request data
+      const data = await request.validateUsing(studentModifyValidator)
 
-      student.merge(data)
-      await student.save()
+      // Update the student data
+      student.merge({
+        name: data.name,
+        firstname: data.firstname,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        gender: data.gender,
+        cni: data.cni,
+        nationality: data.nationality,
+        birthday: data.birthday,
+      })
+      await student.useTransaction(trx).save()
+
+      // Update or create parent data
+      if (data.parentName || data.parentPhone || data.parentEmail || data.parentAddress) {
+        let parent
+
+        // Check if the student already has a parent
+        const existingParent = await student.useTransaction(trx).related('parents').query().first()
+
+        if (existingParent) {
+          // Update the existing parent
+          existingParent.merge({
+            name: data.parentName,
+            phone: data.parentPhone,
+            email: data.parentEmail,
+          })
+          await existingParent.useTransaction(trx).save()
+          parent = existingParent
+        } else {
+          // Create a new parent
+          parent = await Parent.create(
+            {
+              name: data.parentName,
+              phone: data.parentPhone,
+              email: data.parentEmail,
+            },
+            { client: trx }
+          )
+        }
+
+        // Update the studentParent relationship
+        await student.related('parents').sync([parent.id], false, trx)
+      }
+
+      // Commit the transaction if everything is successful
+      await trx.commit()
 
       return response
         .status(200)
-        .json(RequestResponse.success(student, 'Student updated successfully'))
+        .json(RequestResponse.success(student, 'Student and parent updated successfully'))
     } catch (error) {
-      // Catch validation errors
+      // Rollback the transaction in case of any error
+      await trx.rollback()
+
+      // Handle validation errors
       if (error instanceof errors.E_VALIDATION_ERROR) {
         return response
           .status(422)
           .json(RequestResponse.failure(error.messages, 'Validation failed'))
       }
+
+      // Handle other errors
+      console.error(error) // Log the error for debugging
       return response
         .status(400)
-        .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
+        .json(RequestResponse.failure(null, error.message || 'An unexpected error occurred'))
     }
   }
 

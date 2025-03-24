@@ -23,13 +23,17 @@ export default class ClasssController {
 
   async store({ request, response }: HttpContext) {
     try {
+      console.log(request)
       const data = await request.validateUsing(classValidator)
+      console.log(data)
+      console.log(45)
 
-      if (data.start_date && data.start_date < DateTime.now()) {
-        return response
-          .status(400)
-          .json(RequestResponse.failure(null, 'Start date cannot be in the past'))
-      }
+      // if (data.start_date && data.start_date < DateTime.now()) {
+      //   console.log(18)
+      //   return response
+      //     .status(410)
+      //     .json(RequestResponse.failure(null, 'Start date cannot be in the past'))
+      // }
 
       const classs = await Class.create(data)
 
