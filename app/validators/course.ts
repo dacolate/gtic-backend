@@ -11,7 +11,7 @@ export const courseValidator = vine.compile(
         return !course
       }),
     description: vine.string().optional(),
-    pricing_id: vine.number(),
+    pricing_id: vine.number().optional(),
     // .exists(async (query, field) => {
     //   const price = await query.from('pricings').where('id', field).first()
     //   return price

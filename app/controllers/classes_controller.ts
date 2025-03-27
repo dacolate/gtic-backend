@@ -11,7 +11,6 @@ export default class ClasssController {
       .preload('grade', (query) => {
         query.preload('course')
       })
-      .preload('pricing')
       .preload('teacher')
     if (classs.length === 0) {
       return response.status(404).json(RequestResponse.failure(null, 'No class found'))
@@ -61,6 +60,7 @@ export default class ClasssController {
       })
       .preload('pricing')
       .preload('teacher')
+      .preload('students')
       .first()
     if (!classs) {
       return response.status(404).json(RequestResponse.failure(null, 'Class not found'))

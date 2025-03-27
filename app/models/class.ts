@@ -87,7 +87,7 @@ export default class Class extends BaseModel {
   @belongsTo(() => Pricing)
   declare pricing: BelongsTo<typeof Pricing>
 
-  @manyToMany(() => Student, { pivotTable: 'student_class' })
+  @manyToMany(() => Student, { pivotTable: 'student_classes' })
   declare students: ManyToMany<typeof Student>
 
   @column.dateTime()
