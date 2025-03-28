@@ -4,12 +4,30 @@ import { errors } from '@vinejs/vine'
 import Class from '#models/class'
 import db from '@adonisjs/lucid/services/db'
 import Pricing from '#models/pricing'
+import StudentClass from '#models/student_class'
+import Student from '#models/student'
 // import { classValidator } from '#validators/class'
 // import { DateTime } from 'luxon'
 
 export default class ClasssController {
   async index({ response }: HttpContext) {
     const classs = await Class.query()
+      .where('active', true)
+      .preload('grade', (query) => {
+        query.preload('course')
+      })
+      .preload('teacher')
+    if (classs.length === 0) {
+      return response.status(404).json(RequestResponse.failure(null, 'No class found'))
+    }
+    return response
+      .status(200)
+      .json(RequestResponse.success(classs, 'Classes fetched successfully'))
+  }
+
+  async indexInactive({ response }: HttpContext) {
+    const classs = await Class.query()
+      .where('active', false)
       .preload('grade', (query) => {
         query.preload('course')
       })
@@ -149,12 +167,84 @@ export default class ClasssController {
   //   }
   // }
 
+  // async delete({ params, response }: HttpContext) {
+  //   const classs = await Class.find(params.id)
+  //   if (!classs) {
+  //     return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
+  //   }
+  //   if (!classs.active) {
+  //     await classs.delete()
+  //   } else {
+  //     // classs.active = false
+  //     const students = await classs.related('students').query().where('active', true)
+  //     const studentsIds = students.map((student) => student.id)
+  //     const studentsToUpdate = await db
+  //       .from('students')
+  //       .whereIn('id', studentsIds)
+  //       .update({ active: false })
+  //     const studclassestoUpdate = await StudentClass.query()
+  //       .whereIn('student_id', studentsIds)
+  //       .update({ active: false })
+  //     console.log(studentsIds)
+  //     await classs.save()
+  //   }
+  //   return response.status(200).json(RequestResponse.success(null, 'Class deleted successfully'))
+  // }
+
   async delete({ params, response }: HttpContext) {
-    const classs = await Class.find(params.id)
-    if (!classs) {
-      return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
+    const trx = await db.transaction()
+
+    try {
+      const classToDelete = await Class.find(params.id, { client: trx })
+
+      if (!classToDelete) {
+        await trx.rollback()
+        return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
+      }
+
+      if (classToDelete.active) {
+        await trx.rollback()
+        classToDelete.active = false
+        await classToDelete.save()
+        return response
+          .status(200)
+          .json(RequestResponse.success(null, 'Class deactivated successfully'))
+      }
+
+      // Get all students in this class (without checking student_classes.active)
+      const studentsInClass = await classToDelete
+        .useTransaction(trx)
+        .related('students')
+        .query()
+        .where('students.active', true)
+
+      // For each student, check how many classes they have
+      for (const student of studentsInClass) {
+        const classesCount = await StudentClass.query({ client: trx }).where(
+          'student_id',
+          student.id
+        )
+
+        // If student only has this one class, deactivate them
+        if (classesCount.length === 1) {
+          await Student.query({ client: trx }).where('id', student.id).update({ active: false })
+        }
+      }
+
+      // Delete the student-class relationships for this class
+      await StudentClass.query().where('class_id', classToDelete.id).useTransaction(trx).delete()
+
+      // Deactivate the class itself
+      classToDelete.active = false
+      await classToDelete.useTransaction(trx).save()
+
+      await trx.commit()
+      return response
+        .status(200)
+        .json(RequestResponse.success(null, 'Class deactivated successfully'))
+    } catch (error) {
+      await trx.rollback()
+      return response.status(500).json(RequestResponse.failure(null, 'Failed to deactivate class'))
     }
-    await classs.delete()
-    return response.status(200).json(RequestResponse.success(null, 'Class deleted successfully'))
   }
 }

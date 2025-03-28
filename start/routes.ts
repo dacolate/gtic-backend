@@ -89,6 +89,7 @@ router
     router.delete(':id', [ClasssController, 'delete'])
   })
   .prefix('classes')
+router.get('/inactiveclasses', [ClasssController, 'indexInactive'])
 
 router
   .group(() => {
@@ -119,6 +120,7 @@ router
     router.delete(':id', [StudentsController, 'delete'])
   })
   .prefix('students')
+router.get('/inactivestudents', [StudentsController, 'indexInactive'])
 
 router
   .group(() => {

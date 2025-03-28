@@ -128,6 +128,7 @@ export default class StudentsController {
   async index({ response }: HttpContext) {
     await updateStudentClassPaymentStatus({})
     const students = await Student.query()
+      .where('active', true)
       .preload('classes', (query) => {
         query
           .preload('course')
@@ -148,7 +149,30 @@ export default class StudentsController {
       .status(200)
       .json(RequestResponse.success(students, 'Students fetched successfully'))
   }
-
+  async indexInactive({ response }: HttpContext) {
+    await updateStudentClassPaymentStatus({})
+    const students = await Student.query()
+      .where('active', false)
+      .preload('classes', (query) => {
+        query
+          .preload('course')
+          .preload('teacher')
+          .preload('grade', (query2) => {
+            query2.preload('pricing')
+          })
+      })
+      .preload('parents')
+      .preload('attendances')
+      .preload('student_classes', (query) => {
+        query.preload('pricing').preload('class')
+      })
+    if (students.length === 0) {
+      return response.status(404).json(RequestResponse.failure(null, 'No students found'))
+    }
+    return response
+      .status(200)
+      .json(RequestResponse.success(students, 'Students fetched successfully'))
+  }
   async store({ request, response }: HttpContext) {
     try {
       console.log(3) // Debug log
