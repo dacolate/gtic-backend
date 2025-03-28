@@ -85,7 +85,7 @@ router
     router.get(':id', [ClasssController, 'show'])
     router.get('/', [ClasssController, 'index'])
     router.post('/', [ClasssController, 'store'])
-    router.put(':id', [ClasssController, 'update'])
+    // router.put(':id', [ClasssController, 'update'])
     router.delete(':id', [ClasssController, 'delete'])
   })
   .prefix('classes')

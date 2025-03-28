@@ -2,8 +2,10 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { RequestResponse } from '../../types.js'
 import { errors } from '@vinejs/vine'
 import Class from '#models/class'
-import { classValidator } from '#validators/class'
-import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
+import Pricing from '#models/pricing'
+// import { classValidator } from '#validators/class'
+// import { DateTime } from 'luxon'
 
 export default class ClasssController {
   async index({ response }: HttpContext) {
@@ -21,26 +23,71 @@ export default class ClasssController {
   }
 
   async store({ request, response }: HttpContext) {
+    const trx = await db.transaction()
+    console.log('10')
     try {
       console.log(request)
-      const data = await request.validateUsing(classValidator)
-      console.log(data)
-      console.log(45)
+      // const data = await request.validateUsing(classValidator)
+      const payload = request.only([
+        'name',
+        'description',
+        'teacher_id',
+        'start_date',
+        'expected_duration',
+        'grade_id',
+        'course_id',
+        'registrationFee',
+        'firstInstalmentFee',
+        'firstInstalmentDeadline',
+        'secondInstalmentFee',
+        'secondInstalmentDeadline',
+      ])
+      console.log(payload)
 
-      // if (data.start_date && data.start_date < DateTime.now()) {
-      //   console.log(18)
-      //   return response
-      //     .status(410)
-      //     .json(RequestResponse.failure(null, 'Start date cannot be in the past'))
-      // }
+      // Start a database transaction
 
-      const classs = await Class.create(data)
+      const pricing = await Pricing.firstOrCreate(
+        {
+          registerFee: payload.registrationFee,
+          instalment1Fee: payload.firstInstalmentFee,
+          instalment2Fee: payload.secondInstalmentFee,
+          instalment1Deadline: payload.firstInstalmentDeadline,
+          instalment2Deadline: payload.secondInstalmentDeadline,
+        },
+        {
+          registerFee: payload.registrationFee,
+          instalment1Fee: payload.firstInstalmentFee,
+          instalment2Fee: payload.secondInstalmentFee,
+          instalment1Deadline: payload.firstInstalmentDeadline,
+          instalment2Deadline: payload.secondInstalmentDeadline,
+        },
+        { client: trx }
+      )
+
+      console.log(pricing)
+      const classs = await Class.create(
+        {
+          name: payload.name,
+          description: payload.description,
+          teacherId: payload.teacher_id,
+          startDate: payload.start_date,
+          expectedDuration: payload.expected_duration,
+          gradeId: payload.grade_id,
+          courseId: payload.course_id,
+          pricingId: pricing.id,
+        },
+        { client: trx }
+      )
+      console.log(classs)
+      // Commit the transaction
+      await trx.commit()
 
       return response
         .status(201)
-        .json(RequestResponse.success(classs, 'Class created successfully'))
+        .json(RequestResponse.success({ pricing, classs }, 'Class created successfully'))
     } catch (error) {
       // Catch validation errors
+      await trx.rollback()
       if (error instanceof errors.E_VALIDATION_ERROR) {
         return response
           .status(422)
@@ -68,39 +115,39 @@ export default class ClasssController {
     return response.status(200).json(RequestResponse.success(classs, 'Class fetched successfully'))
   }
 
-  async update({ params, request, response }: HttpContext) {
-    try {
-      const classs = await Class.find(params.id)
-      if (!classs) {
-        return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
-      }
+  // async update({ params, request, response }: HttpContext) {
+  //   try {
+  //     const classs = await Class.find(params.id)
+  //     if (!classs) {
+  //       return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
+  //     }
 
-      const data = await request.validateUsing(classValidator)
+  //     const data = await request.validateUsing(classValidator)
 
-      if (data.start_date && data.start_date < DateTime.now()) {
-        return response
-          .status(400)
-          .json(RequestResponse.failure(null, 'Start date cannot be in the past'))
-      }
+  //     if (data.start_date && data.start_date < DateTime.now()) {
+  //       return response
+  //         .status(400)
+  //         .json(RequestResponse.failure(null, 'Start date cannot be in the past'))
+  //     }
 
-      classs.merge(data)
-      await classs.save()
+  //     classs.merge(data)
+  //     await classs.save()
 
-      return response
-        .status(200)
-        .json(RequestResponse.success(classs, 'Class updated successfully'))
-    } catch (error) {
-      // Catch validation errors
-      if (error instanceof errors.E_VALIDATION_ERROR) {
-        return response
-          .status(422)
-          .json(RequestResponse.failure(error.messages, 'Validation failed'))
-      }
-      return response
-        .status(400)
-        .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
-    }
-  }
+  //     return response
+  //       .status(200)
+  //       .json(RequestResponse.success(classs, 'Class updated successfully'))
+  //   } catch (error) {
+  //     // Catch validation errors
+  //     if (error instanceof errors.E_VALIDATION_ERROR) {
+  //       return response
+  //         .status(422)
+  //         .json(RequestResponse.failure(error.messages, 'Validation failed'))
+  //     }
+  //     return response
+  //       .status(400)
+  //       .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
+  //   }
+  // }
 
   async delete({ params, response }: HttpContext) {
     const classs = await Class.find(params.id)
