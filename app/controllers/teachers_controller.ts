@@ -9,7 +9,7 @@ export default class TeachersController {
     // const teachers = await Teacher.all()
 
     const teachers = await Teacher.query().preload('classes', (classQuery) => {
-      classQuery.preload('course')
+      classQuery.preload('course').preload('grade')
     })
 
     if (teachers.length === 0) {
@@ -43,7 +43,12 @@ export default class TeachersController {
   }
 
   async show({ params, response }: HttpContext) {
-    const teacher = await Teacher.query().where('id', params.id).preload('classes').first()
+    const teacher = await Teacher.query()
+      .where('id', params.id)
+      .preload('classes', (classQuery) => {
+        classQuery.preload('course').preload('grade')
+      })
+      .first()
     if (!teacher) {
       return response.status(404).json(RequestResponse.failure(null, 'Teacher not found'))
     }
