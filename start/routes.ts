@@ -37,6 +37,7 @@ router
     router.post('login', [AuthController, 'login']) // Login
     router.delete('logout', [AuthController, 'logout']).use(middleware.auth()) // Logout
     router.get('me', [AuthController, 'me']).use([middleware.auth()]) // Get current user
+    router.get('verify', [AuthController, 'verify']).use([middleware.auth()])
   })
   .prefix('auth')
 

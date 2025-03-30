@@ -41,7 +41,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   // declare role: BelongsTo<typeof Role>
 
   static accessTokens = DbAccessTokensProvider.forModel(User, {
-    expiresIn: '30 days',
+    expiresIn: '24 hours',
     prefix: 'oat_',
     table: 'auth_access_tokens',
     type: 'auth_token',
