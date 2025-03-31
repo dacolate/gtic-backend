@@ -12,9 +12,11 @@ import StudentClass from '#models/student_class'
 import Class from '#models/class'
 import StudentParent from '#models/student_parent'
 import Pricing from '#models/pricing'
+import { ActivityLogger } from '#services/activity_logger'
 
 export default class NewStudentsController {
-  async store({ request, response }: HttpContext) {
+  modInstance = Student
+  async store({ auth, request, response }: HttpContext) {
     let payload
 
     // Validate the request data and catch validation errors
@@ -178,6 +180,7 @@ export default class NewStudentsController {
       // Commit the transaction
       await trx.commit()
 
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, student.id)
       // Return a success response
       return response.status(201).json(
         RequestResponse.success(

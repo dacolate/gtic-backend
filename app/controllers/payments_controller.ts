@@ -4,8 +4,10 @@ import { errors } from '@vinejs/vine'
 import Payment from '#models/payment'
 import { paymentValidator } from '#validators/payment'
 import StudentClass from '#models/student_class'
+import { ActivityLogger } from '#services/activity_logger'
 
 export default class PaymentController {
+  modInstance = Payment
   async index({ response }: HttpContext) {
     const payment = await Payment.query()
       .preload('student')
@@ -28,7 +30,7 @@ export default class PaymentController {
       .json(RequestResponse.success(payment, 'Payments fetched successfully'))
   }
 
-  async store({ request, response }: HttpContext) {
+  async store({ auth, request, response }: HttpContext) {
     try {
       const data = await request.validateUsing(paymentValidator)
 
@@ -45,6 +47,8 @@ export default class PaymentController {
       const payment = await Payment.create({ ...data, studentClassId: studentClass?.id })
 
       console.log(payment)
+
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, payment.id)
 
       return response
         .status(201)
@@ -85,7 +89,7 @@ export default class PaymentController {
       .json(RequestResponse.success(payment, 'Payment fetched successfully'))
   }
 
-  async update({ params, request, response }: HttpContext) {
+  async update({ auth, params, request, response }: HttpContext) {
     try {
       const payment = await Payment.find(params.id)
       if (!payment) {
@@ -96,6 +100,8 @@ export default class PaymentController {
 
       payment.merge(data)
       await payment.save()
+
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, payment.id)
 
       return response
         .status(200)
@@ -113,12 +119,13 @@ export default class PaymentController {
     }
   }
 
-  async delete({ params, response }: HttpContext) {
+  async delete({ auth, params, response }: HttpContext) {
     const payment = await Payment.find(params.id)
     if (!payment) {
       return response.status(404).json(RequestResponse.failure(null, 'Payment not found'))
     }
     await payment.delete()
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, payment.id)
     return response.status(200).json(RequestResponse.success(null, 'Payment deleted successfully'))
   }
 }

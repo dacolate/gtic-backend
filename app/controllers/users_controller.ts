@@ -5,8 +5,10 @@ import { HttpContext } from '@adonisjs/core/http'
 import { RequestResponse } from '../../types.js'
 import { errors } from '@vinejs/vine'
 import { registerValidator } from '#validators/auth'
+// import { ActivityLogger } from '#services/activity_logger'
 
 export default class UsersController {
+  // modInstance = User
   async update({ params, request, auth, response }: HttpContext) {
     try {
       const loggedInUser = auth.user!
@@ -67,6 +69,8 @@ export default class UsersController {
         updated_at: userToEdit.updatedAt,
       }
 
+      // ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, userResponse.id)
+
       return response.ok(RequestResponse.success(userResponse, 'User updated sucessfully'))
     } catch (error) {
       // Catch validation errors
@@ -123,6 +127,8 @@ export default class UsersController {
 
       await userToDelete.delete()
 
+      // ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, userResponse.id)
+
       return response.ok(RequestResponse.success(userResponse, 'User deleted sucessfully'))
     } catch (error) {
       // Catch unexpected errors
@@ -135,6 +141,7 @@ export default class UsersController {
   async fetch({ params, auth, response }: HttpContext) {
     try {
       const loggedInUser = auth.user!
+      console.log('loggedid', auth)
 
       //Get the user to be updated
       const userIdToFetch = params.id
@@ -180,6 +187,7 @@ export default class UsersController {
   async fetchAll({ auth, response }: HttpContext) {
     try {
       const loggedInUser = auth.user!
+      console.log('logged', auth)
 
       //Get the user to be updated
       const users = await User.all()

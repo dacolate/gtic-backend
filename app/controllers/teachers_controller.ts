@@ -3,8 +3,10 @@ import { RequestResponse } from '../../types.js'
 import { errors } from '@vinejs/vine'
 import Teacher from '#models/teacher'
 import { teacherValidator } from '#validators/teacher'
+import { ActivityLogger } from '#services/activity_logger'
 
 export default class TeachersController {
+  modInstance = Teacher
   async index({ response }: HttpContext) {
     // const teachers = await Teacher.all()
 
@@ -20,11 +22,13 @@ export default class TeachersController {
       .json(RequestResponse.success(teachers, 'Teachers fetched successfully'))
   }
 
-  async store({ request, response }: HttpContext) {
+  async store({ auth, request, response }: HttpContext) {
     try {
       const data = await request.validateUsing(teacherValidator)
 
       const teacher = await Teacher.create(data)
+
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, teacher.id)
 
       return response
         .status(201)
@@ -57,7 +61,7 @@ export default class TeachersController {
       .json(RequestResponse.success(teacher, 'Teacher fetched successfully'))
   }
 
-  async update({ params, request, response }: HttpContext) {
+  async update({ auth, params, request, response }: HttpContext) {
     try {
       const teacher = await Teacher.find(params.id)
       if (!teacher) {
@@ -68,7 +72,7 @@ export default class TeachersController {
 
       teacher.merge(data)
       await teacher.save()
-
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, teacher.id)
       return response
         .status(200)
         .json(RequestResponse.success(teacher, 'Teacher updated successfully'))
@@ -85,12 +89,13 @@ export default class TeachersController {
     }
   }
 
-  async delete({ params, response }: HttpContext) {
+  async delete({ auth, params, response }: HttpContext) {
     const teacher = await Teacher.find(params.id)
     if (!teacher) {
       return response.status(404).json(RequestResponse.failure(null, 'Teacher not found'))
     }
     await teacher.delete()
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, teacher.id)
     return response.status(200).json(RequestResponse.success(null, 'Teacher deleted successfully'))
   }
 }

@@ -6,10 +6,12 @@ import db from '@adonisjs/lucid/services/db'
 import Pricing from '#models/pricing'
 import StudentClass from '#models/student_class'
 import Student from '#models/student'
+import { ActivityLogger } from '#services/activity_logger'
 // import { classValidator } from '#validators/class'
 // import { DateTime } from 'luxon'
 
 export default class ClasssController {
+  modInstance = Class
   async index({ response }: HttpContext) {
     const classs = await Class.query()
       .where('active', true)
@@ -40,7 +42,7 @@ export default class ClasssController {
       .json(RequestResponse.success(classs, 'Classes fetched successfully'))
   }
 
-  async store({ request, response }: HttpContext) {
+  async store({ auth, request, response }: HttpContext) {
     const trx = await db.transaction()
     console.log('10')
     try {
@@ -99,6 +101,8 @@ export default class ClasssController {
       console.log(classs)
       // Commit the transaction
       await trx.commit()
+
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, classs.id)
 
       return response
         .status(201)
@@ -191,7 +195,7 @@ export default class ClasssController {
   //   return response.status(200).json(RequestResponse.success(null, 'Class deleted successfully'))
   // }
 
-  async delete({ params, response }: HttpContext) {
+  async delete({ params, response, auth }: HttpContext) {
     const trx = await db.transaction()
 
     try {
@@ -239,6 +243,7 @@ export default class ClasssController {
       await classToDelete.useTransaction(trx).save()
 
       await trx.commit()
+      ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, classToDelete.id)
       return response
         .status(200)
         .json(RequestResponse.success(null, 'Class deactivated successfully'))

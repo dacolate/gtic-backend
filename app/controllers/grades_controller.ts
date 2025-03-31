@@ -6,8 +6,10 @@ import { createGradeValidator, gradeValidator } from '#validators/grade'
 import db from '@adonisjs/lucid/services/db'
 import Pricing from '#models/pricing'
 import Course from '#models/course'
+import { ActivityLogger } from '#services/activity_logger'
 
 export default class GradesController {
+  modInstance = Grade
   async index({ response }: HttpContext) {
     const grades = await Grade.query().preload('classes', (query) =>
       query.preload('teacher').preload('pricing')
@@ -18,7 +20,7 @@ export default class GradesController {
     return response.status(200).json(RequestResponse.success(grades, 'Grades fetched successfully'))
   }
 
-  async store({ request, response }: HttpContext) {
+  async store({ auth, request, response }: HttpContext) {
     let payload
 
     // Validate the request data
@@ -95,6 +97,8 @@ export default class GradesController {
       // Commit transaction
       await trx.commit()
 
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, grade.id)
+
       return response.status(201).json(
         RequestResponse.success(
           {
@@ -125,7 +129,7 @@ export default class GradesController {
     return response.status(200).json(RequestResponse.success(grade, 'Grade fetched successfully'))
   }
 
-  async update({ params, request, response }: HttpContext) {
+  async update({ auth, params, request, response }: HttpContext) {
     try {
       const grade = await Grade.find(params.id)
       if (!grade) {
@@ -136,6 +140,8 @@ export default class GradesController {
 
       grade.merge(data)
       await grade.save()
+
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, grade.id)
 
       return response.status(200).json(RequestResponse.success(grade, 'Grade updated successfully'))
     } catch (error) {
@@ -151,12 +157,13 @@ export default class GradesController {
     }
   }
 
-  async delete({ params, response }: HttpContext) {
+  async delete({ auth, params, response }: HttpContext) {
     const grade = await Grade.find(params.id)
     if (!grade) {
       return response.status(404).json(RequestResponse.failure(null, 'Grade not found'))
     }
     await grade.delete()
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, grade.id)
     return response.status(200).json(RequestResponse.success(null, 'Grade deleted successfully'))
   }
 }

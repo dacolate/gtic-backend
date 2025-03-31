@@ -10,6 +10,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import { RequestResponse } from '../types.js'
+const ActivitiesController = () => import('#controllers/activities_controller')
 const StudentClassesController = () => import('#controllers/student_classes_controller')
 const NewStudentsController = () => import('#controllers/new_students_controller')
 const PaymentController = () => import('#controllers/payments_controller')
@@ -136,3 +137,8 @@ router
 router.post('/', [NewStudentsController, 'store']).prefix('newstudent')
 
 router.post('/', [StudentClassesController, 'store']).prefix('studentclass')
+
+router.get('/activities/:id', [ActivitiesController, 'show']).use([middleware.auth()])
+router
+  .get('/activities/', [ActivitiesController, 'index'])
+  .use([middleware.auth(), middleware.isAdmin()])

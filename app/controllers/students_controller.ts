@@ -8,6 +8,7 @@ import Payment from '#models/payment'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import Parent from '#models/parent'
+import { ActivityLogger } from '#services/activity_logger'
 
 interface UpdateStudentClassPaymentStatusProps {
   id?: number
@@ -125,6 +126,7 @@ async function updateStudentClassPaymentStatus({ id }: UpdateStudentClassPayment
 }
 
 export default class StudentsController {
+  modInstance = Student
   async index({ response }: HttpContext) {
     await updateStudentClassPaymentStatus({})
     const students = await Student.query()
@@ -277,7 +279,7 @@ export default class StudentsController {
   //       .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
   //   }
   // }
-  async update({ params, request, response }: HttpContext) {
+  async update({ auth, params, request, response }: HttpContext) {
     const trx = await db.transaction() // Start a transaction
 
     try {
@@ -340,6 +342,8 @@ export default class StudentsController {
       // Commit the transaction if everything is successful
       await trx.commit()
 
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, student.id)
+
       return response
         .status(200)
         .json(RequestResponse.success(student, 'Student and parent updated successfully'))
@@ -362,12 +366,13 @@ export default class StudentsController {
     }
   }
 
-  async delete({ params, response }: HttpContext) {
+  async delete({ auth, params, response }: HttpContext) {
     const student = await Student.find(params.id)
     if (!student) {
       return response.status(404).json(RequestResponse.failure(null, 'Student not found'))
     }
     await student.delete()
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, student.id)
     return response.status(200).json(RequestResponse.success(null, 'Student deleted successfully'))
   }
 }
