@@ -102,7 +102,7 @@ export default class ClasssController {
       // Commit the transaction
       await trx.commit()
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, classs.id)
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, classs.name, classs.id)
 
       return response
         .status(201)
@@ -243,7 +243,12 @@ export default class ClasssController {
       await classToDelete.useTransaction(trx).save()
 
       await trx.commit()
-      ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, classToDelete.id)
+      ActivityLogger.logDelete(
+        auth.user?.id,
+        this.modInstance,
+        classToDelete.name,
+        classToDelete.id
+      )
       return response
         .status(200)
         .json(RequestResponse.success(null, 'Class deactivated successfully'))

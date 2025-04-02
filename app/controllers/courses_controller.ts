@@ -27,9 +27,15 @@ export default class CoursesController {
     try {
       const data = await request.validateUsing(courseValidator)
 
+      console.log('st')
+
       const course = await Course.create(data)
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, course.id)
+      console.log('ud')
+
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, course.name, course.id)
+
+      console.log('ies')
 
       return response
         .status(201)
@@ -74,7 +80,7 @@ export default class CoursesController {
 
       course.merge(data)
       await course.save()
-      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, course.id)
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, course.name, course.id)
 
       return response
         .status(200)
@@ -97,7 +103,7 @@ export default class CoursesController {
     if (!course) {
       return response.status(404).json(RequestResponse.failure(null, 'Course not found'))
     }
-    ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, course.id)
+    ActivityLogger.logUpdate(auth.user?.id, this.modInstance, course.name, course.id)
     await course.delete()
     return response.status(200).json(RequestResponse.success(null, 'Course deleted successfully'))
   }

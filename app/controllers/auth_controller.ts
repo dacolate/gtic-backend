@@ -19,7 +19,7 @@ export default class AuthController {
           .status(400)
           .json(RequestResponse.failure(null, 'Email or name already taken'))
       }
-
+      data.role = data.role ? data.role : 'user'
       const user = await User.create(data)
 
       const userResponse = {
@@ -31,7 +31,7 @@ export default class AuthController {
         updated_at: user.updatedAt,
       }
 
-      ActivityLogger.logCreate(user.id, this.modInstance, null, undefined)
+      ActivityLogger.logCreate(user.id, this.modInstance, user.name, undefined)
 
       return response
         .status(201)
@@ -69,10 +69,11 @@ export default class AuthController {
           name: user.name,
           email: user.email,
           role: user.role,
+          createdAt: user.createdAt.toLocaleString(),
         },
       }
 
-      ActivityLogger.logUpdate(user.id, this.modInstance, null, undefined)
+      ActivityLogger.logUpdate(user.id, this.modInstance, user.name, undefined)
 
       return response.ok(responseData)
     } catch (error) {
@@ -94,25 +95,6 @@ export default class AuthController {
       return response.json({ valid: false })
     }
   }
-
-  // async refresh({ auth, request, response }: HttpContext) {
-  //   try {
-  //     const refreshToken = request.input('refresh_token')
-  //     const token = await User.accessTokens.createUsingRefreshToken(refreshToken, {
-  //       expiresIn: '24 hours',
-  //     })
-
-  //     return response.json({
-  //       success: true,
-  //       token: token.value!.release(),
-  //     })
-  //   } catch (error) {
-  //     return response.unauthorized({
-  //       success: false,
-  //       message: 'Invalid refresh token',
-  //     })
-  //   }
-  // }
 
   async logout({ auth, response }: HttpContext) {
     try {

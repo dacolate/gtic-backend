@@ -141,7 +141,7 @@ export default class UsersController {
   async fetch({ params, auth, response }: HttpContext) {
     try {
       const loggedInUser = auth.user!
-      console.log('loggedid', auth)
+      // console.log('loggedid', loggedInUser)
 
       //Get the user to be updated
       const userIdToFetch = params.id
@@ -187,7 +187,7 @@ export default class UsersController {
   async fetchAll({ auth, response }: HttpContext) {
     try {
       const loggedInUser = auth.user!
-      console.log('logged', auth)
+      // console.log('logged', loggedInUser)
 
       //Get the user to be updated
       const users = await User.all()

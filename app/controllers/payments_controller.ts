@@ -48,7 +48,12 @@ export default class PaymentController {
 
       console.log(payment)
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, payment.id)
+      ActivityLogger.logCreate(
+        auth.user?.id,
+        this.modInstance,
+        payment.amount.toString(),
+        payment.id
+      )
 
       return response
         .status(201)
@@ -101,7 +106,12 @@ export default class PaymentController {
       payment.merge(data)
       await payment.save()
 
-      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, payment.id)
+      ActivityLogger.logUpdate(
+        auth.user?.id,
+        this.modInstance,
+        payment.amount.toString(),
+        payment.id
+      )
 
       return response
         .status(200)
@@ -125,7 +135,7 @@ export default class PaymentController {
       return response.status(404).json(RequestResponse.failure(null, 'Payment not found'))
     }
     await payment.delete()
-    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, payment.id)
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, payment.amount.toString(), payment.id)
     return response.status(200).json(RequestResponse.success(null, 'Payment deleted successfully'))
   }
 }

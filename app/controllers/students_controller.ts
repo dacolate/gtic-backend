@@ -342,7 +342,7 @@ export default class StudentsController {
       // Commit the transaction if everything is successful
       await trx.commit()
 
-      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, student.id)
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, student.name, student.id)
 
       return response
         .status(200)
@@ -372,7 +372,7 @@ export default class StudentsController {
       return response.status(404).json(RequestResponse.failure(null, 'Student not found'))
     }
     await student.delete()
-    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, student.id)
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, student.name, student.id)
     return response.status(200).json(RequestResponse.success(null, 'Student deleted successfully'))
   }
 }

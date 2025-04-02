@@ -31,7 +31,7 @@ export class ActivityLogger {
   static async logCreate(
     id: number | undefined,
     modelInstance: LucidModel,
-    description = null,
+    description: string | undefined,
     recordId: number | undefined
   ) {
     console.log('tdh')
@@ -47,7 +47,7 @@ export class ActivityLogger {
   static async logUpdate(
     id: number | undefined,
     modelInstance: LucidModel,
-    description = null,
+    description: string | undefined,
     recordId: number | undefined
   ) {
     console.log('tdhhhdh')
@@ -63,7 +63,7 @@ export class ActivityLogger {
   static async logDelete(
     id: number | undefined,
     modelInstance: LucidModel,
-    description = null,
+    description: string | undefined,
     recordId: number | undefined
   ) {
     console.log('now')

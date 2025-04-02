@@ -97,7 +97,7 @@ export default class GradesController {
       // Commit transaction
       await trx.commit()
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, grade.id)
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, grade.name, grade.id)
 
       return response.status(201).json(
         RequestResponse.success(
@@ -141,7 +141,7 @@ export default class GradesController {
       grade.merge(data)
       await grade.save()
 
-      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, grade.id)
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, grade.name, grade.id)
 
       return response.status(200).json(RequestResponse.success(grade, 'Grade updated successfully'))
     } catch (error) {
@@ -163,7 +163,7 @@ export default class GradesController {
       return response.status(404).json(RequestResponse.failure(null, 'Grade not found'))
     }
     await grade.delete()
-    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, grade.id)
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, grade.name, grade.id)
     return response.status(200).json(RequestResponse.success(null, 'Grade deleted successfully'))
   }
 }

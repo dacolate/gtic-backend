@@ -45,32 +45,35 @@ router
 // User management routes
 router
   .group(() => {
-    router.put(':id', [UsersController, 'update']).use([middleware.auth(), middleware.isAdmin()]) // Update user
-    router.delete(':id', [UsersController, 'delete']).use([middleware.auth(), middleware.isAdmin()]) // Delete user
-    router.get(':id', [UsersController, 'fetch']).use([middleware.auth(), middleware.isAdmin()])
-    router.get('/', [UsersController, 'fetchAll']).use([middleware.auth(), middleware.isAdmin()])
+    router.put(':id', [UsersController, 'update'])
+    router.delete(':id', [UsersController, 'delete'])
+    router.get(':id', [UsersController, 'fetch'])
+    router.get('/', [UsersController, 'fetchAll'])
   })
   .prefix('users')
+  .use([middleware.auth(), middleware.isAdmin()])
 
 router
   .group(() => {
     router.get(':id', [CoursesController, 'show'])
     router.get('/', [CoursesController, 'index'])
     router.post('/', [CoursesController, 'store'])
-    router.put(':id', [CoursesController, 'update'])
-    router.delete(':id', [CoursesController, 'delete'])
+    router.put(':id', [CoursesController, 'update']).use([middleware.isAdmin()])
+    router.delete(':id', [CoursesController, 'delete']).use([middleware.isAdmin()])
   })
   .prefix('courses')
+  .use([middleware.auth()])
 
 router
   .group(() => {
     router.get(':id', [GradesController, 'show'])
     router.get('/', [GradesController, 'index'])
     router.post('/', [GradesController, 'store'])
-    router.put(':id', [GradesController, 'update'])
-    router.delete(':id', [GradesController, 'delete'])
+    router.put(':id', [GradesController, 'update']).use([middleware.isAdmin()])
+    router.delete(':id', [GradesController, 'delete']).use([middleware.isAdmin()])
   })
   .prefix('grades')
+  .use([middleware.auth()])
 
 router
   .group(() => {
@@ -81,6 +84,7 @@ router
     router.delete(':id', [TeachersController, 'delete'])
   })
   .prefix('teachers')
+  .use([middleware.auth()])
 
 router
   .group(() => {
@@ -91,7 +95,8 @@ router
     router.delete(':id', [ClasssController, 'delete'])
   })
   .prefix('classes')
-router.get('/inactiveclasses', [ClasssController, 'indexInactive'])
+  .use([middleware.auth()])
+router.get('/inactiveclasses', [ClasssController, 'indexInactive']).use([middleware.auth()])
 
 router
   .group(() => {
@@ -102,6 +107,7 @@ router
     router.delete(':id', [ParentsController, 'delete'])
   })
   .prefix('parents')
+  .use([middleware.auth()])
 
 router
   .group(() => {
@@ -112,6 +118,7 @@ router
     router.delete(':id', [PricingsController, 'delete'])
   })
   .prefix('pricings')
+  .use([middleware.auth()])
 
 router
   .group(() => {
@@ -122,7 +129,9 @@ router
     router.delete(':id', [StudentsController, 'delete'])
   })
   .prefix('students')
-router.get('/inactivestudents', [StudentsController, 'indexInactive'])
+  .use([middleware.auth()])
+
+router.get('/inactivestudents', [StudentsController, 'indexInactive']).use([middleware.auth()])
 
 router
   .group(() => {

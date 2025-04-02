@@ -180,7 +180,7 @@ export default class NewStudentsController {
       // Commit the transaction
       await trx.commit()
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, student.id)
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, student.name, student.id)
       // Return a success response
       return response.status(201).json(
         RequestResponse.success(

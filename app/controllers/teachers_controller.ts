@@ -28,7 +28,7 @@ export default class TeachersController {
 
       const teacher = await Teacher.create(data)
 
-      ActivityLogger.logCreate(auth.user?.id, this.modInstance, null, teacher.id)
+      ActivityLogger.logCreate(auth.user?.id, this.modInstance, teacher.name, teacher.id)
 
       return response
         .status(201)
@@ -72,7 +72,7 @@ export default class TeachersController {
 
       teacher.merge(data)
       await teacher.save()
-      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, null, teacher.id)
+      ActivityLogger.logUpdate(auth.user?.id, this.modInstance, teacher.name, teacher.id)
       return response
         .status(200)
         .json(RequestResponse.success(teacher, 'Teacher updated successfully'))
@@ -95,7 +95,7 @@ export default class TeachersController {
       return response.status(404).json(RequestResponse.failure(null, 'Teacher not found'))
     }
     await teacher.delete()
-    ActivityLogger.logDelete(auth.user?.id, this.modInstance, null, teacher.id)
+    ActivityLogger.logDelete(auth.user?.id, this.modInstance, teacher.name, teacher.id)
     return response.status(200).json(RequestResponse.success(null, 'Teacher deleted successfully'))
   }
 }
