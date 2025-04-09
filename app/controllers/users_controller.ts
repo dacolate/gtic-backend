@@ -4,7 +4,7 @@ import User from '#models/user'
 import { HttpContext } from '@adonisjs/core/http'
 import { RequestResponse } from '../../types.js'
 import { errors } from '@vinejs/vine'
-import { registerValidator } from '#validators/auth'
+import { updateUserValidator } from '#validators/auth'
 // import { ActivityLogger } from '#services/activity_logger'
 
 export default class UsersController {
@@ -40,7 +40,7 @@ export default class UsersController {
         )
       }
 
-      const data = await request.validateUsing(registerValidator)
+      const data = await request.validateUsing(updateUserValidator)
 
       // Check if user already exists
       const existingEmail = await User.findBy('email', data.email)
@@ -50,12 +50,12 @@ export default class UsersController {
           .status(400)
           .json(RequestResponse.failure(null, 'Email or name already taken'))
       }
-      //Users can't change their role
-      if (data.role && data.role !== userToEdit.role) {
-        return response.badRequest(
-          RequestResponse.failure(null, 'Role changes are not allowed via this endpoint')
-        )
-      }
+      // //Users can't change their role
+      // if (data.role && data.role !== userToEdit.role) {
+      //   return response.badRequest(
+      //     RequestResponse.failure(null, 'Role changes are not allowed via this endpoint')
+      //   )
+      // }
       await userToEdit.merge(data)
 
       await userToEdit.save()
@@ -190,7 +190,7 @@ export default class UsersController {
       // console.log('logged', loggedInUser)
 
       //Get the user to be updated
-      const users = await User.all()
+      const users = await User.query().whereNot('id', loggedInUser.id)
 
       const userResponses = users.map((user) => {
         return {

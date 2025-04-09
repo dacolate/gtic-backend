@@ -143,7 +143,7 @@ router
   })
   .prefix('payments')
 
-router.post('/', [NewStudentsController, 'store']).prefix('newstudent')
+router.post('/', [NewStudentsController, 'store']).prefix('newstudent').use([middleware.auth()])
 
 router.post('/', [StudentClassesController, 'store']).prefix('studentclass')
 

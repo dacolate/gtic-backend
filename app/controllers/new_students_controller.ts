@@ -18,6 +18,7 @@ export default class NewStudentsController {
   modInstance = Student
   async store({ auth, request, response }: HttpContext) {
     let payload
+    console.log('store', 'Just entered')
 
     // Validate the request data and catch validation errors
     try {
@@ -34,12 +35,13 @@ export default class NewStudentsController {
         .status(400)
         .json(RequestResponse.failure(null, error || 'An unexpected error occurred'))
     }
-
+    console.log('valOne', 'First validation passed')
     try {
       const studentName = await Student.query()
         .where('name', payload.name)
         .andWhere('firstname', payload.firstname)
         .first()
+      console.log('studentName', studentName)
       if (studentName) {
         return response
           .status(422)
@@ -50,14 +52,17 @@ export default class NewStudentsController {
             .where('email', payload.email as string)
             .first()
         : null
+      console.log('studentEmail', studentEmail)
       if (studentEmail) {
         return response
           .status(422)
           .json(RequestResponse.failure(studentEmail, 'Existing student email'))
       }
+
       const studentPhone = payload.phone
         ? await Student.query().where('phone', payload.phone).first()
         : null
+      console.log('studentPhone', studentPhone)
       if (studentPhone) {
         return response
           .status(422)
