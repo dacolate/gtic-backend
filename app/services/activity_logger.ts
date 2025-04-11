@@ -75,4 +75,20 @@ export class ActivityLogger {
       recordId,
     })
   }
+
+  static async logPatch(
+    id: number | undefined,
+    modelInstance: LucidModel,
+    description: string | undefined,
+    recordId: number | undefined
+  ) {
+    console.log('tdh')
+    await this.log({
+      userId: id,
+      action: 'patch',
+      tableName: modelInstance.name,
+      description,
+      recordId,
+    })
+  }
 }

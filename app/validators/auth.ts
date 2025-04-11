@@ -25,22 +25,8 @@ export const registerValidator = vine.compile(
 
 export const updateUserValidator = vine.compile(
   vine.object({
-    name: vine
-      .string()
-      .minLength(3)
-      .maxLength(64)
-      .unique(async (query, field) => {
-        const user = await query.from('users').where('name', field).first()
-        return !user
-      }),
-    email: vine
-      .string()
-      .email()
-      .normalizeEmail()
-      .unique(async (query, field) => {
-        const user = await query.from('users').where('email', field).first()
-        return !user
-      }),
+    name: vine.string().minLength(3).maxLength(64),
+    email: vine.string().email().normalizeEmail(),
     password: vine.string().minLength(8).maxLength(512).optional(),
   })
 )

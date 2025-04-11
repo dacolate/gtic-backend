@@ -10,6 +10,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import { RequestResponse } from '../types.js'
+const NotificationsController = () => import('#controllers/notifications_controller')
 const ActivitiesController = () => import('#controllers/activities_controller')
 const StudentClassesController = () => import('#controllers/student_classes_controller')
 const NewStudentsController = () => import('#controllers/new_students_controller')
@@ -93,6 +94,7 @@ router
     router.post('/', [ClasssController, 'store'])
     // router.put(':id', [ClasssController, 'update'])
     router.delete(':id', [ClasssController, 'delete'])
+    router.post(':id/extend', [ClasssController, 'extend'])
   })
   .prefix('classes')
   .use([middleware.auth()])
@@ -151,3 +153,11 @@ router.get('/activities/:id', [ActivitiesController, 'show']).use([middleware.au
 router
   .get('/activities/', [ActivitiesController, 'index'])
   .use([middleware.auth(), middleware.isAdmin()])
+
+// start/routes.ts
+router
+  .group(() => {
+    router.get('/notifications', [NotificationsController, 'index'])
+    router.patch('/notifications/:id/read', [NotificationsController, 'markAsRead'])
+  })
+  .use([middleware.auth()])

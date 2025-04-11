@@ -7,6 +7,7 @@ import Pricing from '#models/pricing'
 import StudentClass from '#models/student_class'
 import Student from '#models/student'
 import { ActivityLogger } from '#services/activity_logger'
+import ClassNotificationService from '#services/class_notification_service'
 // import { classValidator } from '#validators/class'
 // import { DateTime } from 'luxon'
 
@@ -256,5 +257,15 @@ export default class ClasssController {
       await trx.rollback()
       return response.status(500).json(RequestResponse.failure(null, 'Failed to deactivate class'))
     }
+  }
+
+  public async extend({ auth, params, response }: HttpContext) {
+    const classs = await Class.query().where('id', params.id).first()
+    if (!classs) {
+      return response.status(404).json(RequestResponse.failure(null, 'Class not found'))
+    }
+    await ClassNotificationService.extend(classs.id, params.days)
+    ActivityLogger.logPatch(auth.user?.id, this.modInstance, classs.name, classs.id)
+    return RequestResponse.success(null, 'Class extended successfully')
   }
 }
